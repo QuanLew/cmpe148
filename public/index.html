@@ -5,14 +5,16 @@
     <meta charset="urf-8" />
   </head>
   <body>
-    <p>Welcome to my app</p>
+    <p>Welcome to my MapFriends</p>
 
-    <ol id="messages"></ol>
-    <ol id="map" style="width: 500px; height: 500px"></ol>
-
+    <!--<ol id="messages"></ol>-->
+    <div style="display: inline">
+      <ol id="map"></ol>
+      <ol id="map1"></ol>
+    </div>
     <form id="message-form">
-      <input name="message" type="text" placeholder="Message" />
-      <button>Send</button>
+      <input name="message" type="text" placeholder="Enter your address" />
+      <button>Find route</button>
     </form>
 
     <button id="send-location">Send location</button>

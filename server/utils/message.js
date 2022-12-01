@@ -15,4 +15,17 @@ var generateLocationMessage = (from, latitude, longitude) => {
     createAt: new Date().getTime(),
   };
 };
-module.exports = { generateMessage, generateLocationMessage };
+
+var generateLocationRoute = (from, name) => {
+  return {
+    from,
+    stress: name,
+    createAt: new Date().getTime(),
+  };
+};
+
+module.exports = {
+  generateMessage,
+  generateLocationMessage,
+  generateLocationRoute,
+};

@@ -3,7 +3,11 @@ const express = require("express");
 const socketIO = require("socket.io");
 const http = require("http");
 
-const { generateMessage, generateLocationMessage } = require("./utils/message");
+const {
+  generateMessage,
+  generateLocationMessage,
+  generateLocationRoute,
+} = require("./utils/message");
 const publicPath = path.join(__dirname, "../public");
 var app = express();
 var server = http.createServer(app);
@@ -47,6 +51,10 @@ io.on("connection", (socket) => {
     // });
   });
 
+  socket.on("createLocation", (message) => {
+    io.emit("newRoute", generateLocationRoute(message.from, message.text));
+  });
+
   // https://www.google.com/map?q=latitude,longitude
   // socket.on("createLocationMessage", (coords) => {
   //   io.emit(
@@ -56,7 +64,6 @@ io.on("connection", (socket) => {
   // });
 
   socket.on("createLocationMessage", (coords) => {
-    console.log("server lo: ", coords);
     io.emit(
       "newLocationMessage",
       generateLocationMessage("Admin", coords.latitude, coords.longitude)

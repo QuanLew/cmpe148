@@ -18,6 +18,9 @@ socket.on("newMessage", function (message) {
   jQuery("#messages").append(li);
 });
 
+var globalLat = 0;
+var globalLong = 0;
+
 socket.on("newLocationMessage", function (message) {
   console.log("new location: ", message);
 
@@ -41,35 +44,83 @@ socket.on("newLocationMessage", function (message) {
   });
   var lat = `${message.lat}`;
   var long = `${message.long}`;
+
+  globalLat = lat;
+  globalLong = long;
+
   div.addMarker({
     coords: [lat, long], // GPS coords
     url: `${message.url}`, // Link to redirect onclick (optional)
     id: "marker1", // Unique ID for your marker
   });
-  div.addWay({
-    start: "1520 E Capitol Expy, San Jose, CA, 95121", // Postal address for the start marker (obligatory)
-    end: [lat, long], // Postal Address or GPS coordinates for the end marker (obligatory)
-    route: "way", // Block's ID for the route display (optional)
-    langage: "english", // language of the route detail (optional)
-  });
   jQuery("#map").append(div);
 });
 
+// new event listener find route
+// (KING LIBS) 150 E San Fernando St, San Jose, CA 95112
+socket.on("newRoute", function (message) {
+  var div = jQuery("<div></div>");
+  div.css("width", "500px");
+  div.css("height", "500px");
+  div.googleMap({
+    zoom: 20, // Initial zoom level (optional)
+    //coords: [37.2929515, -121.8553376], // Map center (optional)
+    type: "HYBRID", // Map type (optional)
+  });
+
+  div.addMarker({
+    coords: [globalLat, globalLong], // GPS coords
+    id: "route1", // Unique ID for your marker
+  });
+  div.addWay({
+    start: `${message.stress}`, // Postal address for the start marker (obligatory)
+    end: [globalLat, globalLong], // Postal Address or GPS coordinates for the end marker (obligatory)
+    route: "way", // Block's ID for the route display (optional)
+    langage: "english", // language of the route detail (optional)
+  });
+
+  var stress = `${message.stress}`;
+  console.log("srtess: ", stress.length);
+  if ((globalLat == 0 && globalLong == 0) || stress.length < 1) {
+    alert("Location is null. Check your location or your input");
+  } else {
+    jQuery("#map").remove();
+    //jQuery("#map1").append(div);
+    $.ajax({
+      url: "http://localhost:3000/",
+      cache: false,
+    }).done(function (html) {
+      $("#map1").empty().append(div);
+    });
+  }
+});
+
+//function find route
 //get button from id: message-form and send a event message to server
 //with function createMessage
 jQuery("#message-form").on("submit", function (e) {
   e.preventDefault();
 
+  // socket.emit(
+  //   "createMessage",
+  //   {
+  //     from: "USER",
+  //     text: jQuery("[name=message]").val(),
+  //   },
+  //   function () {}
+  // );
+
   socket.emit(
-    "createMessage",
+    "createLocation",
     {
-      from: "USER",
+      from: "YOUR FRIENDS",
       text: jQuery("[name=message]").val(),
     },
     function () {}
   );
 });
 
+//function get location
 //get button with id: send-location and open socket
 var locationBtn = jQuery("#send-location");
 locationBtn.on("click", function () {
