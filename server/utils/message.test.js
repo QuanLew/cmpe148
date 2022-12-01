@@ -24,10 +24,10 @@ describe("generateLocationMessage", () => {
     var from = "M";
     var latitude = 15;
     var longitude = 29;
-    var url = `https://www.google.com/map?q=${latitude},${longitude}`;
+    var url = `https://www.google.com/map?q=15,29`;
     var message = generateLocationMessage(from, latitude, longitude);
 
-    expect(message.createdAt).toBeA("number");
+    expect(message.createAt).toBeA("number");
     expect(message).toInclude({
       from,
       url,
