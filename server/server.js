@@ -8,6 +8,7 @@ const {
   generateLocationMessage,
   generateLocationRoute,
 } = require("./utils/message");
+
 const publicPath = path.join(__dirname, "../public");
 var app = express();
 var server = http.createServer(app);
@@ -17,17 +18,36 @@ app.use(express.static(publicPath));
 
 const PORT = process.env.PORT || 3000;
 
+let interval;
+
+const getApiAndEmit = (socket,coords) => {
+  //const response = new Date();
+
+  // Emitting a new message. Will be consumed by the client
+  //socket.emit("FromAPI", response);
+
+   socket.emit(
+      "util",
+      "YES"
+    );
+};
+
 io.on("connection", (socket) => {
   console.log("NEW USER CONNECTED");
+  if (interval) {
+    clearInterval(interval);
+  }
+  //interval = setInterval(() => getApiAndEmit(socket), 1000);
 
   socket.on("disconnect", () => {
     console.log("USER WAS DISCONNECTED");
+    clearInterval(interval);
   });
 
   // socket.emit from Admin to user
   socket.emit(
     "newMessage",
-    generateMessage("Admin", "Welcome to the chat app")
+    generateMessage("Admin", "Welcome to the My app")
   );
 
   // socket.broadcast.emit from Admin to other users
@@ -55,7 +75,7 @@ io.on("connection", (socket) => {
     io.emit("newRoute", generateLocationRoute(message.from, message.text));
   });
 
-  // https://www.google.com/map?q=latitude,longitude
+  // https://www.google.com/maps?q=latitude,longitude
   // socket.on("createLocationMessage", (coords) => {
   //   io.emit(
   //     "newMessage",
@@ -64,15 +84,21 @@ io.on("connection", (socket) => {
   // });
 
   socket.on("createLocationMessage", (coords) => {
+    console.log("server get location","SUCCESS!!!")
     io.emit(
-      "newLocationMessage",
-      generateLocationMessage("Admin", coords.latitude, coords.longitude)
+      "newLocationMessageRealTime",
+      generateLocationMessage("GET LOCATION", coords.latitude, coords.longitude)
     );
   });
 
-  //   socket.on("createEmail", (newEmail) => {
-  //     console.log("createEmail", newEmail);
-  //   });
+  socket.on("createLocationMessageRealTime", (message) => {
+    console.log("SERVER IS GETTING LOCATION",message);
+    interval = setInterval(() => getApiAndEmit(socket), 3000);
+    // io.emit(
+    //   "newLocationMessage",
+    //   generateLocationMessage("Admin", coords.latitude, coords.longitude)
+    // );
+  });
 });
 
 server.listen(PORT, () => {

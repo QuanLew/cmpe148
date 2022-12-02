@@ -12,7 +12,7 @@ var generateLocationMessage = (from, latitude, longitude) => {
     url: `https://www.google.com/maps?q=${latitude},${longitude}`,
     lat: latitude,
     long: longitude,
-    createAt: new Date().getTime(),
+    createAt: new Date().toLocaleTimeString(),
   };
 };
 
@@ -20,7 +20,7 @@ var generateLocationRoute = (from, name) => {
   return {
     from,
     stress: name,
-    createAt: new Date().getTime(),
+    createAt: new Date().toLocaleTimeString(),
   };
 };
 
