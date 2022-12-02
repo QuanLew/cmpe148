@@ -2,10 +2,13 @@ var socket = io();
 
 socket.on("connect", function () {
   console.log("Connected to server.");
+  flag = true;
 });
 
+var flag = false;
 socket.on("disconnect", function () {
   console.log("Disconnected to server.");
+  flag = false;
 });
 
 // new event listener
@@ -18,22 +21,16 @@ socket.on("newMessage", function (message) {
   jQuery("#messages").append(li);
 });
 
+socket.on("FromAPI",function(message){
+  console.log("time from server",message)
+})
+
 var globalLat = 0;
 var globalLong = 0;
 
+//find location
 socket.on("newLocationMessage", function (message) {
-  console.log("new location: ", message);
-
-  // var li = jQuery("<li></li>");
-  // var a = jQuery('<a target="_blank">My current location</a>');
-
-  // li.text(`${message.from}: `);
-  // //li.css("color", "green");
-  // a.attr("href", message.url);
-  // li.append(a);
-
-  // jQuery("#messages").append(li);
-
+  console.log("server sent pos",message.from)
   var div = jQuery("<div></div>");
   div.css("width", "500px");
   div.css("height", "500px");
@@ -54,6 +51,43 @@ socket.on("newLocationMessage", function (message) {
     id: "marker1", // Unique ID for your marker
   });
   jQuery("#map").append(div);
+});
+
+//find location realtime
+socket.on("newLocationMessageRealTime", function (message) {
+  //console.log("server sent position",message.createAt)
+  // var div = jQuery("<div></div>");
+  // div.css("width", "500px");
+  // div.css("height", "500px");
+  // div.googleMap({
+  //   zoom: 10, // Initial zoom level (optional)
+  //   //coords: [37.2929515, -121.8553376], // Map center (optional)
+  //   type: "ROADMAP", // Map type (optional)
+  // });
+  var lat = `${message.lat}`;
+  var long = `${message.long}`;
+
+  globalLat = lat;
+  globalLong = long;
+
+  // div.addMarker({
+  //   coords: [lat, long], // GPS coords
+  //   url: `${message.url}`, // Link to redirect onclick (optional)
+  //   id: "marker1", // Unique ID for your marker
+  // });
+  // jQuery("#map").append(div);
+
+  var li = jQuery("<li></li>");
+  li.text(`lat: ${message.lat} - long: ${message.long} - date: ${message.createAt} `);
+
+  // $.ajax({
+  //   url: "http://localhost:3000/",
+  //   cache: false,
+  // }).done(function (html) {
+  //   $("#showLocation").empty().append(li);
+  // });
+
+  jQuery("#showLocation").append(li);
 });
 
 // new event listener find route
@@ -80,12 +114,11 @@ socket.on("newRoute", function (message) {
   });
 
   var stress = `${message.stress}`;
-  console.log("srtess: ", stress.length);
+  console.log("stress", stress.length);
   if ((globalLat == 0 && globalLong == 0) || stress.length < 1) {
     alert("Location is null. Check your location or your input");
   } else {
     jQuery("#map").remove();
-    //jQuery("#map1").append(div);
     $.ajax({
       url: "http://localhost:3000/",
       cache: false,
@@ -101,15 +134,6 @@ socket.on("newRoute", function (message) {
 jQuery("#message-form").on("submit", function (e) {
   e.preventDefault();
 
-  // socket.emit(
-  //   "createMessage",
-  //   {
-  //     from: "USER",
-  //     text: jQuery("[name=message]").val(),
-  //   },
-  //   function () {}
-  // );
-
   socket.emit(
     "createLocation",
     {
@@ -120,24 +144,65 @@ jQuery("#message-form").on("submit", function (e) {
   );
 });
 
-//function get location
-//get button with id: send-location and open socket
+//function get realtime location
+//get button with id: send-location-realtime and open socket
+var locationBtn1 = jQuery("#send-location-realtime");
+locationBtn1.on("click", function () {
+  socket.emit("createLocationMessageRealTime", {
+    message: "REALTIME!",
+  });
+});
+
+socket.on("util",function(message){
+  console.log("Server is sending",message)
+
+  jQuery("#map").remove();
+  jQuery("#map1").remove();
+
+  if (!navigator.geolocation) {
+    return alert("Geolocation not supported by your browser");
+  }
+
+  if(flag == false){
+    alert("Server is disconnected")
+  }else{
+    navigator.geolocation.getCurrentPosition(
+      function (position) {
+        //console.log("pos",position);
+        socket.emit("createLocationMessage", {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      function () {
+        alert("Unable to fetch location");
+      }
+    );
+  }
+});
+
+//btn with id: send-location
 var locationBtn = jQuery("#send-location");
 locationBtn.on("click", function () {
   if (!navigator.geolocation) {
     return alert("Geolocation not supported by your browser");
   }
 
-  navigator.geolocation.getCurrentPosition(
-    function (position) {
-      console.log(position);
-      socket.emit("createLocationMessage", {
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-      });
-    },
-    function () {
-      alert("Unable to fetch location");
-    }
-  );
+  if(flag == false){
+    alert("Server is disconnected")
+  }else{
+    navigator.geolocation.getCurrentPosition(
+      function (position) {
+        console.log("pos",position);
+        socket.emit("createLocationMessage", {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      function () {
+        alert("Unable to fetch location");
+      }
+    );
+  }
+ 
 });
